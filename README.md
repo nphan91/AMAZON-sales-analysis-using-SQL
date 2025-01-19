@@ -48,3 +48,23 @@ GROUP BY
     c.[category_name]
 ORDER BY SUM(oi.[total_sale]) DESC;
 ```
+## 3. Average Order Value (AOV)
+- Compute the average order value for each customer.
+- Challenge: Include only customers with more than 5 orders
+```sql
+SELECT 
+    c.[customer_id],
+    CONCAT(c.[first_name], ' ', c.[last_name]) AS [full_name],
+    SUM(oi.[total_sale]) / COUNT(o.[order_id]) AS [AOV],
+    COUNT(o.[order_id]) AS [total_orders]
+FROM dbo.[orders] AS o
+JOIN dbo.[customers] AS c
+    ON c.[customer_id] = o.[customer_id]
+JOIN dbo.[order_items] AS oi
+    ON oi.[order_id] = o.[order_id]
+GROUP BY 
+    c.[customer_id], 
+    c.[first_name], 
+    c.[last_name]
+HAVING COUNT(o.[order_id]) > 5;
+```
