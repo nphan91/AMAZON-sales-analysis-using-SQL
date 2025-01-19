@@ -68,3 +68,44 @@ GROUP BY
     c.[last_name]
 HAVING COUNT(o.[order_id]) > 5;
 ```
+## 4. Monthly Sales Trend
+- Query monthy total sales over the past year. 
+- Challenge: Display the sales trend, grouping by month, return current_month sale, last month sale
+```sql
+-- Monthly Sales Trend: Current month sale and last month sale
+WITH MonthlySales AS (
+    SELECT 
+        YEAR(o.[order_date]) AS [year],
+        MONTH(o.[order_date]) AS [month],
+        ROUND(SUM(oi.[total_sale]), 2) AS [total_sale]
+    FROM dbo.[orders] AS o
+    JOIN dbo.[order_items] AS oi
+        ON o.[order_id] = oi.[order_id]
+    WHERE o.[order_date] >= DATEADD(YEAR, -1, GETDATE()) -- Past one year
+    GROUP BY 
+        YEAR(o.[order_date]),
+        MONTH(o.[order_date])
+)
+SELECT 
+    [year],
+    [month],
+    [total_sale] AS [current_month_sale],
+    LAG([total_sale], 1) OVER (ORDER BY [year], [month]) AS [last_month_sale]
+FROM MonthlySales
+ORDER BY [year], [month];
+```
+# 5. Customers with No Purchases 
+- Find customers who have never placed an order.
+```sql
+SELECT 
+    c.[customer_id],
+    CONCAT(c.[first_name], ' ', c.[last_name]) AS [full_name],
+    c.[email]
+FROM dbo.[customers] AS c
+LEFT JOIN dbo.[orders] AS o
+    ON c.[customer_id] = o.[customer_id]
+WHERE o.[customer_id] IS NULL
+ORDER BY c.[customer_id];
+```
+
+
