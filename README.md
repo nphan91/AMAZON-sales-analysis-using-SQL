@@ -1,10 +1,10 @@
 # AMAZON-sales-analysis-using-SQL
 Image
 ### SQL Query 
-## Business Prob;ems 
+## Business ProbLems 
 ## 1. Top Selling Products 
-# Query the top 10 products by total sales value. 
-# Challenge: IncLude product name, total quantity sold, and total sales value.
+## Query the top 10 products by total sales value. 
+## Challenge: IncLude product name, total quantity sold, and total sales value.
 ```SQL
 -- Create a new column 
 ALTER TABLE dbo.[order_items]
