@@ -107,5 +107,36 @@ LEFT JOIN dbo.[orders] AS o
 WHERE o.[customer_id] IS NULL
 ORDER BY c.[customer_id];
 ```
+# 6. Least selling categories by State 
+- Identify the least selling product category for each state
+- Challenge: Include the total sales for that category within each state
+```sql
+-- Least selling categories by state
+WITH ranking_table AS (
+    SELECT 
+        c.[state],
+        cat.[category],
+        SUM(oi.[total_sale]) AS [total_sale],
+        RANK() OVER (PARTITION BY c.[state] ORDER BY SUM(oi.[total_sale]) ASC) AS [rank]
+    FROM dbo.[orders] AS o
+    JOIN dbo.[customers] AS c
+        ON o.[customer_id] = c.[customer_id]
+    JOIN dbo.[order_items] AS oi
+        ON o.[order_id] = oi.[order_id]
+    JOIN dbo.[products] AS p
+        ON oi.[product_id] = p.[product_id]
+    JOIN dbo.[category] AS cat
+        ON p.[category_id] = cat.[category_id]
+    GROUP BY c.[state], cat.[category]
+)
+SELECT 
+    [state],
+    [category],
+    [total_sale]
+FROM ranking_table
+WHERE [rank] = 1
+ORDER BY [state];
+```
+
 
 
