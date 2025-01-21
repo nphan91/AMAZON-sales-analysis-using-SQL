@@ -137,6 +137,80 @@ FROM ranking_table
 WHERE [rank] = 1
 ORDER BY [state];
 ```
+# 7. Customer Lifetime Value (CLTV)
+- Calculate the total value of orders placed by each customer over their lifetime
+- Challenge: Rank customers based on their city
+```sql
+SELECT 
+    c.[customer_id],
+    CONCAT(c.[first_name], ' ', c.[last_name]) AS [full_name],
+    c.[city],
+    SUM(oi.[total_sale]) AS [CLTV],
+    DENSE_RANK() OVER (PARTITION BY c.[city] ORDER BY SUM(oi.[total_sale]) DESC) AS [city_ranking]
+FROM dbo.[orders] AS o
+JOIN dbo.[customers] AS c
+    ON c.[customer_id] = o.[customer_id]
+JOIN dbo.[order_items] AS oi
+    ON oi.[order_id] = o.[order_id]
+GROUP BY 
+    c.[customer_id], 
+    c.[first_name], 
+    c.[last_name], 
+    c.[city]
+ORDER BY 
+    c.[city], 
+    [city_ranking];
 
-
-
+# 8. Inventory Stock Alerts
+- Query products with stock levels below a certain threshold (e.g., less than 10 units).
+- Challenge: Include last restock date and warehouse information
+```sql
+SELECT 
+    i.[product_id],
+    p.[product_name],
+    i.[stock] as [current_tock_left],
+    i.[last_restock_date],
+    i.[warehouse_id]
+FROM dbo.[inventory] AS i
+JOIN dbo.[products] AS p
+    ON i.[product_id] = p.[product_id]
+JOIN dbo.[warehouses] AS w
+    ON i.[warehouse_id] = w.[warehouse_id]
+WHERE i.[stock] < 10
+ORDER BY i.[stock] ASC;
+```
+# 9. Shipping Delays
+- Identify orders where the shipping date is later than 3 days after the order date
+- Challegne: Include customer, order details and deliverry provider
+```sql
+SELECT 
+    c.[customer_id],
+    CONCAT(c.[first_name], ' ', c.[last_name]) AS [full_name],
+    c.[email],
+    o.[order_id],
+    o.[order_date],
+    s.[shipping_date],
+    s.[shipping_provider],
+    DATEDIFF(DAY, o.[order_date], s.[shipping_date]) AS [days_to_ship]
+FROM dbo.[orders] AS o
+JOIN dbo.[customers] AS c
+    ON c.[customer_id] = o.[customer_id]
+JOIN dbo.[shippings] AS s
+    ON o.[order_id] = s.[order_id]
+WHERE DATEDIFF(DAY, o.[order_date], s.[shipping_date]) > 3
+ORDER BY [days_to_ship] DESC;
+```
+# 10. Payment Sucess Rate
+- Calculate the percentage of successful payments across all orders
+- Challenge: Include breakdowns by payment status (e.g., failed, pending)
+```sql
+SELECT 
+    p.[payment_status],
+    COUNT(*) AS [total_count],
+    CAST(COUNT(*) AS DECIMAL) / (SELECT COUNT(*) FROM dbo.[payments]) * 100 AS [payment_success_rate]
+FROM dbo.[orders] AS o
+JOIN dbo.[payments] AS p
+    ON o.[order_id] = p.[order_id]
+GROUP BY p.[payment_status]
+ORDER BY [payment_success_rate] DESC;
+```
