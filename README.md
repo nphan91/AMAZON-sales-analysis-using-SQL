@@ -214,3 +214,52 @@ JOIN dbo.[payments] AS p
 GROUP BY p.[payment_status]
 ORDER BY [payment_success_rate] DESC;
 ```
+# 11. Top performing sellers
+- Find the top 5 sellers based on total sales value
+- Challenge: Include both successful and failed orders, and display their percentage of sucessful orders
+```sql
+-- Step 1: Find the top 5 sellers based on total sales value
+WITH TopSellers AS (
+    SELECT TOP 5 
+        s.[seller_id], 
+        s.[seller_name], 
+        SUM(oi.[total_sale]) AS [total_sale]
+    FROM dbo.[orders] AS o
+    JOIN dbo.[sellers] AS s
+        ON o.[seller_id] = s.[seller_id]
+    JOIN dbo.[order_items] AS oi
+        ON oi.[order_id] = o.[order_id]
+    GROUP BY s.[seller_id], s.[seller_name]
+    ORDER BY SUM(oi.[total_sale]) DESC
+),
+
+-- Step 2: Calculate order status breakdown for "Completed" and "Cancelled" orders
+OrderBreakdown AS (
+    SELECT 
+        o.[seller_id],
+        t.[seller_name],
+        SUM(CASE WHEN o.[order_status] = 'Completed' THEN 1 ELSE 0 END) AS [completed_orders],
+        SUM(CASE WHEN o.[order_status] = 'Cancelled' THEN 1 ELSE 0 END) AS [cancelled_orders],
+        COUNT(*) AS [total_orders]
+    FROM dbo.[orders] AS o
+    JOIN TopSellers AS t
+        ON o.[seller_id] = t.[seller_id]
+    WHERE o.[order_status] IN ('Completed', 'Cancelled') -- Only include these statuses
+    GROUP BY o.[seller_id], t.[seller_name]
+)
+
+-- Step 3: Add success rate calculation
+SELECT 
+    ob.[seller_id],
+    ob.[seller_name],
+    ob.[completed_orders],
+    ob.[cancelled_orders],
+    ob.[total_orders],
+    ROUND(
+        (100.0 * ob.[completed_orders]) / ob.[total_orders], 2
+    ) AS [success_rate]
+FROM OrderBreakdown AS ob
+ORDER BY ob.[success_rate] DESC, ob.[seller_id];
+```
+
+
