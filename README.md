@@ -391,6 +391,21 @@ ORDER BY
 - Calculate the total revenue handled by each shipping provider
 - Challenge : Include the total number of orders handled and the average delivery time for each provider
 ``sql
-
+SELECT 
+    s.[shipping_provider],
+    SUM(oi.[total_sale]) AS [total_revenue],
+    COUNT(o.[order_id]) AS [total_orders],
+    AVG(DATEDIFF(DAY, o.[order_date], s.[shipping_date])) AS [avg_delivery_time]
+FROM 
+    dbo.orders o
+JOIN 
+    dbo.order_items oi ON o.[order_id] = oi.[order_id]
+JOIN 
+    dbo.shippings s ON o.[order_id] = s.[order_id]
+GROUP BY 
+    s.[shipping_provider]
+ORDER BY 
+      [total_revenue] DESC;
+```
 
 
