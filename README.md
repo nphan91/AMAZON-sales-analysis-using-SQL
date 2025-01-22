@@ -1,7 +1,20 @@
 # AMAZON-sales-analysis-using-SQL
 Image
-### SQL Query 
+
 ## Business ProbLems 
+This project aims to analyze and optimize Amazon's sales and operations through a comprehensive data-driven approach. The primary business challenges include:
+1. Identifying top-performing and underperforming products, sellers, and categories.
+
+2. Enhancing customer retention and understanding purchase behavior.
+
+3. Streamlining inventory and shipping operations.
+
+4. Evaluating payment success rates and reducing transaction failures.
+
+5. Detecting and addressing issues such as high product return rates and delayed shipping.
+
+6. Providing actionable insights for strategic decision-making in sales and operations.
+### SQL Query 
 ## 1. Top Selling Products 
 - Query the top 10 products by total sales value.
 - Challenge: Include product name, total quantity sold, and total sales value.
