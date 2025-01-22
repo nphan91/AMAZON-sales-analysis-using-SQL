@@ -390,7 +390,7 @@ ORDER BY
 # 17. Revenue by Shipping Provider
 - Calculate the total revenue handled by each shipping provider
 - Challenge : Include the total number of orders handled and the average delivery time for each provider
-``sql
+```sql
 SELECT 
     s.[shipping_provider],
     SUM(oi.[total_sale]) AS [total_revenue],
@@ -406,6 +406,43 @@ GROUP BY
     s.[shipping_provider]
 ORDER BY 
       [total_revenue] DESC;
+```
+# 18. Top 10 product with highest decreasing revenue ratio compare to last year (2022) and current_year(2023)
+- Challenge: Return product_id, product_name, category_name, 2022 revenue and 2023 revenue decreas ratio at end Round the result 
+```sql
+WITH yearly_revenue AS (
+    SELECT 
+        p.[product_id],
+        p.[product_name],
+        c.[category_name],
+        SUM(CASE WHEN YEAR(o.[order_date]) = 2022 THEN oi.[total_sale] ELSE 0 END) AS [revenue_2022],
+        SUM(CASE WHEN YEAR(o.[order_date]) = 2023 THEN oi.[total_sale] ELSE 0 END) AS [revenue_2023]
+    FROM 
+        dbo.orders o
+    JOIN 
+        dbo.order_items oi ON o.[order_id] = oi.[order_id]
+    JOIN 
+        dbo.products p ON oi.[product_id] = p.[product_id]
+    JOIN 
+        dbo.category c ON p.[category_id] = c.[category_id]
+    WHERE 
+        o.[order_date] BETWEEN '2022-01-01' AND '2023-12-31'
+    GROUP BY 
+        p.[product_id], p.[product_name], c.[category_name]
+)
+SELECT TOP 10
+    [product_id], 
+    [product_name], 
+    [category_name], 
+    [revenue_2022], 
+    [revenue_2023], 
+    ROUND(((CAST([revenue_2022] AS DECIMAL) - CAST([revenue_2023] AS DECIMAL)) / NULLIF([revenue_2022], 0)) * 100, 2) AS [decrease_ratio]
+FROM 
+    yearly_revenue
+WHERE 
+    [revenue_2022] > 0
+ORDER BY 
+    [decrease_ratio] DESC;
 ```
 
 
