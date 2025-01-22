@@ -261,5 +261,136 @@ SELECT
 FROM OrderBreakdown AS ob
 ORDER BY ob.[success_rate] DESC, ob.[seller_id];
 ```
+# 12. Product Profit Margin 
+- Calculate the profit margin for each product (difference between price and cost of goods sold)
+- Challenge: Rank products by their profit margin, showing highest to lowest
+```sql
+SELECT 
+    p.[product_id],
+    p.[product_name],
+    SUM(oi.[total_sale] - (p.[cogs] * oi.[quantity])) AS [total_profit],
+    (SUM(oi.[total_sale] - (p.[cogs] * oi.[quantity])) / SUM(oi.[total_sale]) * 100) AS [profit_margin],
+    DENSE_RANK() OVER (
+        ORDER BY 
+            (SUM(oi.[total_sale] - (p.[cogs] * oi.[quantity])) / SUM(oi.[total_sale]) * 100) DESC
+    ) AS [product_rank]
+FROM dbo.[order_items] AS oi
+JOIN dbo.[products] AS p
+    ON oi.[product_id] = p.[product_id]
+GROUP BY 
+    p.[product_id],
+    p.[product_name]
+ORDER BY 
+    [profit_margin] DESC;
+```
+# 13. Most Returned Products
+- Query the top 10 products by the number of returns
+- Challenge : Display the return rate as a percentage of total units sold for each product
+```sql
+SELECT TOP 10
+    p.[product_id],
+    p.[product_name],
+    COUNT(*) AS [total_unit_sold],
+    SUM(CASE WHEN o.[order_status] = 'Returned' THEN 1 ELSE 0 END) AS [total_returned],
+    (SUM(CASE WHEN o.[order_status] = 'Returned' THEN 1 ELSE 0 END) * 1.0 / COUNT(*) * 100) AS [return_percentage]
+FROM 
+    dbo.[order_items] oi
+JOIN 
+    dbo.[products] p ON oi.[product_id] = p.[product_id]
+JOIN 
+    dbo.[orders] o ON o.[order_id] = oi.[order_id]
+GROUP BY 
+    p.[product_id], 
+    p.[product_name]
+ORDER BY 
+    [return_percentage] DESC;
+```
+# 14. Inactive Sellers
+- Identify sellers who haven't made any sales in the last 6 months
+- Challenge : Show the last sale date and total sales from those sellers
+```sql
+WITH cte1 AS (
+    SELECT seller_id 
+    FROM dbo.sellers
+    WHERE seller_id NOT IN (
+        SELECT seller_id 
+        FROM dbo.orders  
+        WHERE order_date >= DATEADD(MONTH, -6, GETDATE())
+    )
+)
+SELECT 
+    o.[seller_id],
+    MAX(o.[order_date]) AS last_sale_date,
+    SUM(oi.[total_sale]) AS total_sales
+FROM 
+    dbo.orders o
+JOIN 
+    cte1 ON o.[seller_id] = cte1.[seller_id]
+JOIN 
+    dbo.order_items oi ON o.[order_id] = oi.[order_id]
+GROUP BY 
+    o.[seller_id];
+```
+# 15. Identify customers into returning or new 
+- if the customer has done more than 5 return categorise them as returning otherwise new
+- Challenge: List customers id, name, total orders, total returns
+```sql
+SELECT 
+    c.[customer_id],
+    CONCAT(c.[first_name], ' ', c.[last_name]) AS [full_name],
+    COUNT(o.[order_id]) AS [total_orders],
+    SUM(CASE WHEN o.[order_status] = 'Returned' THEN 1 ELSE 0 END) AS [total_returns],
+    CASE 
+        WHEN SUM(CASE WHEN o.[order_status] = 'Returned' THEN 1 ELSE 0 END) > 5 THEN 'Returning'
+        ELSE 'New'
+    END AS [customer_category]
+FROM 
+    dbo.customers c
+JOIN 
+    dbo.orders o ON c.[customer_id] = o.[customer_id]
+GROUP BY 
+    c.[customer_id], c.[first_name], c.[last_name]
+ORDER BY 
+    [total_orders] DESC;
+```
+# 16. Top 5 customers by orders in each state 
+- Identify the top 5 customers with the highest number of orders for each state
+- Challegne : Include the number of orders and total sales for each customer 
+```sql
+WITH ranked_customers AS (
+    SELECT 
+        c.[customer_id],
+        CONCAT(c.[first_name], ' ', c.[last_name]) AS [full_name],
+        c.[state],
+        COUNT(o.[order_id]) AS [total_orders],
+        SUM(oi.[total_sale]) AS [total_sales],
+        ROW_NUMBER() OVER (PARTITION BY c.[state] ORDER BY COUNT(o.[order_id]) DESC) AS [rank]
+    FROM 
+        dbo.customers c
+    JOIN 
+        dbo.orders o ON c.[customer_id] = o.[customer_id]
+    JOIN 
+        dbo.order_items oi ON o.[order_id] = oi.[order_id]
+    GROUP BY 
+        c.[customer_id], c.[first_name], c.[last_name], c.[state]
+)
+SELECT 
+    [customer_id], 
+    [full_name], 
+    [state], 
+    [total_orders], 
+    [total_sales]
+FROM 
+    ranked_customers
+WHERE 
+    [rank] <= 5
+ORDER BY 
+    [state], [total_orders] DESC;
+```
+# 17. Revenue by Shipping Provider
+- Calculate the total revenue handled by each shipping provider
+- Challenge : Include the total number of orders handled and the average delivery time for each provider
+``sql
+
 
 
