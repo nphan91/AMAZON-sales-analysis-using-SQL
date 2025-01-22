@@ -1,5 +1,5 @@
 # AMAZON-sales-analysis-using-SQL
-Image
+![Image](https://github.com/nphan91/AMAZON-sales-analysis-using-SQL/blob/main/Amazon%20Logo.png)
 ## Overview
 This project aims to analyze and optimize Amazon's sales and operations through a comprehensive data-driven approach. The primary business challenges include:
 1. Identifying top-performing and underperforming products, sellers, and categories.
