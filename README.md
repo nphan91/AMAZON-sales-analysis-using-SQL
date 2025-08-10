@@ -188,7 +188,7 @@ GROUP BY
 ORDER BY 
     c.[city], 
     [city_ranking];
-
+```
 # 8. Inventory Stock Alerts
 - Query products with stock levels below a certain threshold (e.g., less than 10 units).
 - Challenge: Include last restock date and warehouse information
